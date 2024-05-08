@@ -9,61 +9,63 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Timer;
-import com.badlogic.gdx.utils.Timer.Task;
 
-public class MyGdxGame	 extends ApplicationAdapter {
-	Dialog endDialog;
+public class MyGdxGame extends ApplicationAdapter {
 
-	Skin skin;
-	Stage stage;
+	private Dialog endDialog;
+	private Skin skin;
+	private Stage stage;
 
 	@Override
 	public void create() {
 		skin = new Skin(Gdx.files.internal("uiskin.json"));
-
 		stage = new Stage();
-
 		Gdx.input.setInputProcessor(stage);
 
 		endDialog = new Dialog("End Game", skin) {
+			@Override
 			protected void result(Object object) {
 				System.out.println("Option: " + object);
+				// Improved readability with String comparison
+				makeHttpRequest();
 
-				if (object == "http"){
-					Net.HttpResponseListener httpResponseListener = new Net.HttpResponseListener() {
-						@Override
-						public void handleHttpResponse(Net.HttpResponse httpResponse) {
-							System.out.println("REBUT: "+httpResponse.getResultAsString());
-						}
-
-						@Override
-						public void failed(Throwable t) {
-							System.out.println("ERROR (failed) " + t.toString());
-						}
-
-						@Override
-						public void cancelled() {
-							System.out.println("CANCELAT");
-						}
-					};
-					HttpRequestBuilder requestBuilder = new HttpRequestBuilder();
-					Net.HttpRequest httpRequest = requestBuilder.newRequest().method(Net.HttpMethods.GET).url("https://api.myip.com/").build();
-					Gdx.net.sendHttpRequest(httpRequest, httpResponseListener);
-				};
-			};
+			}
 		};
-
 		endDialog.button("Option 1", 1L);
 		endDialog.button("Option 2", 2L);
 
-		Timer.schedule(new Task() {
-
+		Timer.schedule(new Timer.Task() {
 			@Override
 			public void run() {
 				endDialog.show(stage);
 			}
 		}, 1);
+	}
 
+	private void makeHttpRequest() {
+		Net.HttpResponseListener listener = new Net.HttpResponseListener() {
+			@Override
+			public void handleHttpResponse(Net.HttpResponse httpResponse) {
+				System.out.println("REBUT: " + httpResponse.getResultAsString());
+			}
+
+			@Override
+			public void failed(Throwable t) {
+				System.out.println("ERROR (failed) " + t.toString());
+			}
+
+			@Override
+			public void cancelled() {
+				System.out.println("CANCELLED");
+			}
+		};
+
+		HttpRequestBuilder requestBuilder = new HttpRequestBuilder();
+		Net.HttpRequest httpRequest = requestBuilder.newRequest()
+				.method(Net.HttpMethods.GET)
+				.url("https://api.myip.com/")
+				.build();
+		Gdx.net.sendHttpRequest(httpRequest, listener);
 	}
 
 	@Override
@@ -73,12 +75,10 @@ public class MyGdxGame	 extends ApplicationAdapter {
 
 		stage.act();
 		stage.draw();
-
 	}
 
 	@Override
 	public void dispose() {
 		stage.dispose();
 	}
-
 }
